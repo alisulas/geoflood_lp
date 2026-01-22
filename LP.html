@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoFlood AI - Cek Risiko Banjir Sebelum Beli Rumah</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            green: '#16a34a',
+                            yellow: '#eab308',
+                            dark: '#14532d',
+                            light: '#dcfce7'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .text-gradient {
+            background: linear-gradient(to right, #16a34a, #eab308);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-brand {
+            background: linear-gradient(135deg, #16a34a 0%, #eab308 100%);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .phone-frame {
+            border: 14px solid #1f2937;
+            border-radius: 3rem;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            box-shadow: 0 0 0 2px #374151, 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(22, 163, 74, 0.2);
+            z-index: 10;
+        }
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 28px;
+            width: 130px;
+            background: #1f2937;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 20;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans overflow-x-hidden">
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-300">
+        <div class="bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-brand-light flex items-center justify-center text-brand-green">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-sm">Mengunduh GeoFlood AI</h4>
+                <p class="text-xs text-gray-300">Aplikasi Anda siap dalam sekejap...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-40 transition-all duration-300" id="navbar">
+        <div class="absolute inset-0 glass"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-2">
+                    <!-- 1. LOGO UTAMA GAMBAR -->
+                    <img src="https://z-cdn-media.chatglm.cn/files/a12fd2da-acc9-4dcd-bf6b-37f6f7d2cf03.png?auth_key=1869050824-1ca61a7b084446c5b98276ce8b33cfad-0-4a70109ff0f1124193206ac9d3afd2aa" alt="GeoFlood AI Logo" class="h-10 w-auto object-contain filter drop-shadow-md">
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#fitur" class="text-gray-600 hover:text-brand-green font-medium transition">Fitur</a>
+                    <a href="#cara-kerja" class="text-gray-600 hover:text-brand-green font-medium transition">Cara Kerja</a>
+                    <a href="#keuntungan" class="text-gray-600 hover:text-brand-green font-medium transition">Hitung Untung</a>
+                    <a href="#harga" class="text-gray-600 hover:text-brand-green font-medium transition">Harga</a>
+                    <button onclick="downloadApp()" class="bg-brand-green hover:bg-brand-dark text-white px-5 py-2.5 rounded-full font-medium transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Unduh App
+                    </button>
+                </div>
+                <button class="md:hidden text-gray-600 text-2xl">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-gradient-to-b from-green-50 to-white">
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+            
+            <!-- Left: Copywriting -->
+            <div class="relative z-10 reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-brand-green text-xs font-bold uppercase tracking-wide mb-6 border border-green-200">
+                    <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+                    Akurasi Prediksi 87.3% Berbasis AI
+                </div>
+                <h1 class="text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
+                    Mau Beli Property? <br>
+                    <span class="text-gradient">Cek Dulu Banjirnya</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-lg leading-relaxed">
+                    <strong>Hindari kerugian ratusan juta rupiah akibat salah beli property.</strong> Cek risiko banjir dan proyeksi banjir sebelum Anda membeli property
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <button onclick="downloadApp()" class="flex items-center justify-center gap-3 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
+                        <i class="fa-brands fa-apple text-2xl"></i>
+                        <div class="text-left leading-tight">
+                            <div class="text-xs text-gray-400 font-normal">Download on the</div>
+                            <div>App Store</div>
+                        </div>
+                    </button>
+                    <button onclick="downloadApp()" class="flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-50 transition shadow-md hover:shadow-xl transform hover:-translate-y-1">
+                        <i class="fa-brands fa-google-play text-2xl text-brand-green"></i>
+                        <div class="text-left leading-tight">
+                            <div class="text-xs text-gray-500 font-normal">Get it on</div>
+                            <div>Google Play</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                    <div class="flex -space-x-2">
+                        <img class="w-8 h-8 rounded-full border-2 border-white" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Andi" alt="User">
+                        <img class="w-8 h-8 rounded-full border-2 border-white" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Siti" alt="User">
+                        <img class="w-8 h-8 rounded-full border-2 border-white" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Budi" alt="User">
+                    </div>
+                    <div class="flex items-center gap-1 text-yellow-500">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <span class="font-semibold text-gray-700">4.9/5 (Ribu+ Review)</span>
+                </div>
+            </div>
+
+            <!-- Right: Phone Mockup -->
+            <div class="relative z-10 lg:h-[650px] flex items-center justify-center reveal delay-200">
+                <div class="absolute w-[500px] h-[500px] bg-gradient-brand rounded-full opacity-10 blur-3xl animate-pulse"></div>
+                <div class="phone-frame w-[320px] h-[650px] animate-float">
+                    <div class="phone-notch"></div>
+                    <img 
+                        src="https://z-cdn-media.chatglm.cn/files/3874997b-2403-4560-bd33-795b7514cd40.png?auth_key=1869003278-76a210b7c8eb44ed87e5a498067992d7-0-c7111533259c531f581110e026c36dea" 
+                        alt="GeoFlood AI App Interface" 
+                        class="w-full h-full object-cover"
+                    >
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: ILLUSTRASI CARA KERJA (3. Ilustrasi Tambahan) -->
+    <section id="cara-kerja" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="text-brand-green font-bold tracking-wider uppercase mb-2 text-sm">Mudah Digunakan</div>
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Hanya 3 Langkah, Property Terproteksi</h2>
+                <p class="text-lg text-gray-600">
+                    Teknologi kompleks kami, dioperasikan dengan mudah dalam hitungan detik.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Connecting Line (Desktop) -->
+                <div class="hidden md:block absolute top-24 left-0 w-full h-1 bg-gray-200 z-0 transform -translate-y-1/2"></div>
+
+                <!-- Step 1 -->
+                <div class="relative z-10 text-center reveal">
+                    <div class="w-20 h-20 mx-auto bg-white rounded-full shadow-xl border-4 border-brand-green flex items-center justify-center text-brand-green text-3xl mb-6">
+                        <i class="fa-solid fa-map-pin"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">1. Input Lokasi</h3>
+                    <p class="text-gray-600 px-4">Ketik alamat properti atau drop pin langsung di peta aplikasi.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative z-10 text-center reveal delay-100">
+                    <div class="w-20 h-20 mx-auto bg-white rounded-full shadow-xl border-4 border-brand-yellow flex items-center justify-center text-brand-yellow text-3xl mb-6">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">2. AI Menganalisa</h3>
+                    <p class="text-gray-600 px-4">Sistem kami memproses 50+ parameter data geospasial & hidrologi.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative z-10 text-center reveal delay-200">
+                    <div class="w-20 h-20 mx-auto bg-white rounded-full shadow-xl border-4 border-blue-600 flex items-center justify-center text-blue-600 text-3xl mb-6">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">3. Lihat Hasil</h3>
+                    <p class="text-gray-600 px-4">Dapatkan skor risiko, prediksi banjir, dan saran mitigasi instan.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: FITUR UNGGULAN -->
+    <section id="fitur" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="text-brand-green font-bold tracking-wider uppercase mb-2 text-sm">Teknologi Canggih</div>
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Fitur Lengkap untuk Analisis Mendalam</h2>
+                <p class="text-lg text-gray-600">
+                    Kami tidak hanya menunjukkan peta, tapi memberikan solusi. 6 Fitur unggulan GeoFlood AI untuk melindungi investasi Anda.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal group">
+                    <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-brand-green text-2xl mb-6 group-hover:bg-brand-green group-hover:text-white transition">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">Flood Risk Score (0-100)</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Indikator tunggal yang mudah dipahami untuk mengukur tingkat bahaya banjir property anda. Skor 0 berarti sangat aman, sedangkan skor 100 menandakan risiko tertinggi.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal delay-100 group">
+                    <div class="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center text-brand-yellow text-2xl mb-6 group-hover:bg-brand-yellow group-hover:text-white transition">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">Flood Prediction 20 Tahun</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Jangan hanya lihat sekarang. Prediksi AI kami memperkirakan risiko banjir 5, 10, hingga 20 tahun ke depan agar investasi anda aman jangka panjang
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal delay-200 group">
+                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 text-2xl mb-6 group-hover:bg-blue-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">InstantMap Interaktif</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Lihat visualisasi zona banjir secara langsung di titik property anda. Peta Satelit membantu anda memvisualisasukan zona risiko banjir berdasarkan warna
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal delay-100 group">
+                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 text-2xl mb-6 group-hover:bg-purple-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-code-compare"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">Property Compare & AI Advice</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Bingung memilih properti terbaik? Bandingkan beberapa pilihan sekaligus berdasarkan analisis potensi keuntungan, tingkat risiko, dan faktor kunci lainnya. 
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal delay-200 group">
+                    <div class="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center text-red-600 text-2xl mb-6 group-hover:bg-red-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-timeline"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">Historical Timeline</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Lihat sejarah banjir di koordinat tersebut tahun demi tahun. Tahu kapan terakhir banjir parah terjadi dengan data yang tervalidasi.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="p-6 rounded-2xl bg-white hover:bg-white hover:shadow-xl border border-transparent hover:border-gray-100 transition duration-300 reveal delay-300 group">
+                    <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 text-2xl mb-6 group-hover:bg-orange-600 group-hover:text-white transition">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3 text-gray-900">Smart ROI & Financial</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Hitung estimasi biaya, proyeksi keuntungan, dan analisis ROI properti Anda dengan mudah. Dilengkapi prediksi harga berbasis Kecerdasan Buatan (AI) untuk perencanaan investasi yang lebih akurat
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: ILLUSTRASI GAMBAR APLIKASI (2. Tampilan Aplikasi) -->
+    <section class="py-20 bg-white overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Description -->
+                <div class="reveal">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">Analisis Mendalam Dalam Satu Layar</h2>
+                    <p class="text-lg text-gray-600 mb-8">
+                        Tidak perlu report tebal yang membingungkan. GeoFlood AI menyajikan data kompleks ke dalam dashboard yang mudah dibaca oleh siapa saja.
+                    </p>
+                    
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-brand-green shrink-0 mt-1">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Visualisasi Warna</h4>
+                                <p class="text-sm text-gray-600">Hijau (Aman), Kuning (Waspada), Merah (Bahaya). Simpel dan langsung paham.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-brand-green shrink-0 mt-1">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Pinpoint Lokasi</h4>
+                                <p class="text-sm text-gray-600">Ketahui jarak properti ke sungai terdekat dan titik genangan.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-brand-green shrink-0 mt-1">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">Laporan Siap Download</h4>
+                                <p class="text-sm text-gray-600">Butuh bukti untuk nego? Download PDF laporan resmi dalam 1 klik.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Right: App Illustration (Simulated Screen) -->
+                <div class="relative flex justify-center reveal delay-200">
+                    <!-- Decorative Circle -->
+                    <div class="absolute inset-0 bg-green-50 rounded-full scale-90 z-0"></div>
+                    
+                    <!-- Main Phone Frame -->
+                    <div class="phone-frame w-[300px] h-[600px] z-10 shadow-2xl rotate-y-6">
+                        <div class="phone-notch"></div>
+                        <div class="h-full w-full bg-gray-50 flex flex-col">
+                             <!-- Mock Header -->
+                             <div class="pt-10 px-4 bg-white pb-2 shadow-sm">
+                                 <div class="flex justify-between items-center text-xs font-bold text-gray-400 mb-2">
+                                     <span>HISTORICAL</span>
+                                     <span class="text-brand-green">CURRENT</span>
+                                     <span>PREDICTION</span>
+                                 </div>
+                                 <h3 class="font-bold text-gray-800 text-sm">Cluster Bumi Rafflesia</h3>
+                             </div>
+                             <!-- Mock Map Area -->
+                             <div class="flex-grow bg-blue-100 relative overflow-hidden flex items-center justify-center">
+                                 <div class="absolute w-full h-full opacity-50 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover"></div>
+                                 <!-- Zones -->
+                                 <div class="absolute top-1/3 left-1/4 w-24 h-32 bg-red-400/30 border border-red-500 rounded-lg flex items-center justify-center">
+                                     <span class="text-xs font-bold text-red-800">Zona Banjir</span>
+                                 </div>
+                                 <div class="absolute bottom-1/3 right-1/4 w-20 h-20 bg-green-400/30 border border-green-500 rounded-lg flex items-center justify-center">
+                                     <span class="text-xs font-bold text-green-800">Aman</span>
+                                 </div>
+                             </div>
+                             <!-- Mock Bottom Sheet -->
+                             <div class="bg-white p-4 rounded-t-3xl shadow-lg z-20">
+                                 <div class="w-12 h-1 bg-gray-300 mx-auto mb-3 rounded-full"></div>
+                                 <div class="flex justify-between items-center">
+                                     <div>
+                                         <div class="text-xs text-gray-500">Risk Score</div>
+                                         <div class="text-2xl font-bold text-brand-yellow">89/100</div>
+                                     </div>
+                                     <div class="text-right">
+                                         <div class="text-xs text-gray-500">Status</div>
+                                         <div class="text-sm font-bold text-red-500">High Risk</div>
+                                     </div>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: PERHITUNGAN KEUNTUNGAN (4. Pricing & Calculation) -->
+    <section id="keuntungan" class="py-20 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="text-brand-green font-bold tracking-wider uppercase mb-2 text-sm">Hitung Hemat Anda</div>
+                <h2 class="text-3xl lg:text-4xl font-bold mb-4">Investasi Kecil, Hindari Kerugian Besar</h2>
+                <p class="text-lg text-gray-400">
+                    Lihat perbandingan simulasi pembelian rumah senilai Rp 1 Miliar. Berapa yang bisa Anda hemat?
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Scenario 1: Tanpa GeoFlood (Bad) -->
+                <div class="bg-gray-800 rounded-3xl p-8 border border-gray-700 reveal">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Tanpa GeoFlood AI</h3>
+                            <p class="text-sm text-red-400">High Risk Scenario</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Harga Jual Properti</span>
+                            <span class="font-bold">Rp 1.000.000.000</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Biaya Kerusakan Banjir</span>
+                            <span class="font-bold text-red-400">- Rp 100.000.000</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-gray-700">
+                            <span class="text-gray-400">Depresiasi Nilai Jual</span>
+                            <span class="font-bold text-red-400">- Rp 150.000.000</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-500/10 p-4 rounded-xl text-center">
+                        <div class="text-sm text-red-400 uppercase tracking-wide mb-1">Total Kerugian Potensial</div>
+                        <div class="text-3xl font-extrabold text-red-500">Rp 250.000.000</div>
+                    </div>
+                </div>
+
+                <!-- Scenario 2: Dengan GeoFlood (Good) -->
+                <div class="bg-gradient-to-br from-green-900 to-gray-900 rounded-3xl p-8 border border-brand-green/30 shadow-2xl reveal delay-200 transform md:-translate-y-4">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-full bg-brand-green/20 flex items-center justify-center text-brand-green text-xl">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Dengan GeoFlood AI</h3>
+                            <p class="text-sm text-brand-green">Smart Decision</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex justify-between items-center py-2 border-b border-green-900">
+                            <span class="text-gray-400">Biaya Aplikasi (Lifetime)</span>
+                            <span class="font-bold">- Rp 300.000</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-green-900">
+                            <span class="text-gray-400">Hindari Kerusakan Banjir</span>
+                            <span class="font-bold text-brand-green">+ Rp 100.000.000</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 border-b border-green-900">
+                            <span class="text-gray-400">Nego Harga Karena Data</span>
+                            <span class="font-bold text-brand-green">+ Rp 50.000.000</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-green/20 p-4 rounded-xl text-center border border-brand-green/30">
+                        <div class="text-sm text-brand-green uppercase tracking-wide mb-1">Total Keuntungan Bersih</div>
+                        <div class="text-3xl font-extrabold text-white">Rp 149.700.000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: PRICING (4. Pricing) -->
+    <section id="harga" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="text-brand-green font-bold tracking-wider uppercase mb-2 text-sm">Investasi Pintar</div>
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Pilih Paket Sesuai Kebutuhan</h2>
+                <p class="text-lg text-gray-600">
+                    Hemat ratusan juta hanya dengan harga paket minuman kopi bulanan.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 items-center">
+                
+                <!-- Basic -->
+                <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm reveal hover:shadow-lg transition">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Basic</h3>
+                    <p class="text-gray-500 text-sm mb-6">Untuk 1 pilihan properti</p>
+                    <div class="text-4xl font-extrabold text-gray-900 mb-6">Rp 50rb<span class="text-base font-normal text-gray-500">/cek</span></div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Flood Risk Score
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Peta Zona Risiko
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Validasi 1 Tahun
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 rounded-xl border border-gray-300 font-bold text-gray-700 hover:bg-gray-50 transition">
+                        Coba Sekarang
+                    </button>
+                </div>
+
+                <!-- Premium (Popular) -->
+                <div class="bg-white rounded-3xl p-8 border-2 border-brand-green shadow-xl relative transform md:-translate-y-4 reveal delay-100">
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-brand-green text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                        Paling Laris
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Premium</h3>
+                    <p class="text-gray-500 text-sm mb-6">Untuk pembeli serius</p>
+                    <div class="text-4xl font-extrabold text-gray-900 mb-6">Rp 300rb<span class="text-base font-normal text-gray-500">/bulan</span></div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> <strong>Unlimited</strong> Cek Properti
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Prediksi 20 Tahun
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Fitur Property Compare
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Download Laporan PDF
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Konsultasi Pakar (Sesi 1)
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 rounded-xl bg-brand-green text-white font-bold hover:bg-brand-dark transition shadow-lg">
+                        Langganan Premium
+                    </button>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm reveal hover:shadow-lg transition">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Enterprise / API</h3>
+                    <p class="text-gray-500 text-sm mb-6">Untuk Developer & Bank</p>
+                    <div class="text-4xl font-extrabold text-gray-900 mb-6">Custom</div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Full API Access
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Integrasi White Label
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Bulk Analysis
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-gray-600">
+                            <i class="fa-solid fa-check text-brand-green"></i> Dedicated Support
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 rounded-xl border border-gray-300 font-bold text-gray-700 hover:bg-gray-50 transition">
+                        Hubungi Sales
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: MANFAAT KONSUMEN -->
+    <section id="manfaat" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+                <div class="text-brand-green font-bold tracking-wider uppercase mb-2 text-sm">Kebutuhan Anda</div>
+                <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Kenapa Anda Wajib Punya GeoFlood AI?</h2>
+                <p class="text-lg text-gray-600">
+                    GeoFlood AI bukan aplikasi peta biasa. Ini adalah alat analisis cerdas yang memberikan Anda data prediktif untuk mengambil keputusan properti yang lebih aman dan menguntungkan
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Benefit 1: Anti Penipuan -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-brand-green text-3xl shadow-sm">
+                        <i class="fa-solid fa-shield-cat"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Hindari Penjual tidak jujur</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Agen atau developer sering menyembunyikan riwayat banjir. Dengan data faktual, Anda tidak bisa dibohongi oleh kata-kata manis "dulu tidak pernah banjir".
+                    </p>
+                </div>
+
+                <!-- Benefit 3: Nilai Aset -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal delay-200 hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-brand-yellow text-3xl shadow-sm">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Hindari Nilai Property Turun</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Properti di zona rawan banjir memiliki nilai jual yang rentan turun dan lebih sulit dipasarkan. Dengan memastikan lokasi aman, Anda melindungi aset dari penyusutan nilai dan mempertahankan daya tariknya di masa depan.
+                    </p>
+                </div>
+
+                <!-- Benefit 4: Hemat Waktu -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal delay-100 hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-blue-500 text-3xl shadow-sm">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Survei Cepat & Akurat, Tanpa Ribet</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Hemat waktu, tenaga, dan biaya survei lapangan. Dapatkan analisis risiko banjir yang komprehensif hanya dalam hitungan menit, langsung dari genggaman Anda. Tidak perlu menunggu musim hujan atau mewawancarai tetangga.
+                    </p>
+                </div>
+
+                <!-- Benefit 5: Daya Tawar -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal delay-200 hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-purple-500 text-3xl shadow-sm">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Nego Harga Property lebih Wow</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Tunjukkan laporan GeoFlood AI ke penjual jika skornya kuning/merah. Gunakan data ini untuk mendapatkan harga yang rasional dan sesuai dengan kondisi sebenarnya dari properti tersebut.
+                    </p>
+                </div>
+
+                <!-- Benefit 2: Aman & Sehat -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal delay-100 hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-red-500 text-3xl shadow-sm">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Lindungi Kesehatan Keluarga</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Pilih property yang bebas dari ancaman banjir untuk melindungi orang tercinta dari risiko penyakit pasca-banjir seperti leptospirosis dan infeksi kulit.
+                    </p>
+                </div>
+
+                <!-- Benefit 6: Ketenangan -->
+                <div class="bg-gray-50 p-8 rounded-3xl shadow-sm border border-gray-100 reveal delay-300 hover:-translate-y-2 transition duration-300">
+                    <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 text-indigo-500 text-3xl shadow-sm">
+                        <i class="fa-solid fa-mug-hot"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Peace of Mind (Ketenangan Pikiran)</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Hilangkan kekhawatiran dan rasa was-was. Dengan pemahaman yang jelas tentang risiko di lingkungan Anda, Anda bisa lebih tenang dan siap, kapan pun musim hujan datang.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimoni" class="py-20 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-12">Apa Kata Mereka?</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gray-800 p-6 rounded-2xl relative reveal">
+                    <i class="fa-solid fa-quote-left text-4xl text-brand-green opacity-20 absolute top-4 left-4"></i>
+                    <p class="mb-4 relative z-10 italic">"2024 Hampir beli rumah di Bekasi, Nebraska Terrace. Untung cek GeoFlood AI dulu, ternyata 2025 banjir parah. Alhamulillah banget!"</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Rizky" class="w-10 h-10 rounded-full bg-gray-600" alt="User">
+                        <div>
+                            <div class="font-bold">Rizky Pratama</div>
+                            <div class="text-xs text-gray-400">Pembeli Rumah Pertama</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-2xl relative reveal delay-100">
+                    <i class="fa-solid fa-quote-left text-4xl text-brand-green opacity-20 absolute top-4 left-4"></i>
+                    <p class="mb-4 relative z-10 italic">"Sangat membantu saya sebagai agen properti. Transparansi data ini membuat klien lebih percaya dan deal jadi lebih cepat."</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Diana" class="w-10 h-10 rounded-full bg-gray-600" alt="User">
+                        <div>
+                            <div class="font-bold">Diana Sari</div>
+                            <div class="text-xs text-gray-400">Agen Properti Senior</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-2xl relative reveal delay-200">
+                    <i class="fa-solid fa-quote-left text-4xl text-brand-green opacity-20 absolute top-4 left-4"></i>
+                    <p class="mb-4 relative z-10 italic">"Data akurasinya luar biasa. Saya pakai untuk cek lahan investasi saya di Bekasi. Fitur prediksi 20 tahun sangat berguna."</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Bambang" class="w-10 h-10 rounded-full bg-gray-600" alt="User">
+                        <div>
+                            <div class="font-bold">Bambang Hartono</div>
+                            <div class="text-xs text-gray-400">Investor Properti</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-brand rounded-3xl p-8 md:p-16 text-center text-white relative overflow-hidden shadow-2xl reveal">
+                <!-- Decorative patterns -->
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-black opacity-10 rounded-full -ml-16 -mb-16"></div>
+
+                <h2 class="text-3xl md:text-5xl font-bold mb-6 relative z-10">Lindungi Aset Anda Sekarang!</h2>
+                <p class="text-xl mb-8 max-w-2xl mx-auto text-green-50 relative z-10">
+                    Gunakan teknologi terbaik untuk mengecek risiko banjir. Unduh GeoFlood AI sekarang, gratis untuk analisis pertama.
+                </p>
+                
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 relative z-10">
+                    <button onclick="downloadApp()" class="w-full md:w-auto bg-white text-brand-green hover:bg-gray-50 px-8 py-4 rounded-xl font-bold text-lg transition shadow-xl flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-download"></i> Unduh Sekarang (Gratis)
+                    </button>
+                </div>
+                
+                <p class="mt-6 text-sm text-green-100 opacity-80">Tersedia di iOS & Android • Akurasi 87.3%</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white pt-16 pb-8 border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            <div class="col-span-2 md:col-span-1">
+                <div class="flex items-center gap-2 mb-4 text-gray-900">
+                    <!-- Logo Footer Image -->
+                    <img src="https://z-cdn-media.chatglm.cn/files/a12fd2da-acc9-4dcd-bf6b-37f6f7d2cf03.png?auth_key=1869050824-1ca61a7b084446c5b98276ce8b33cfad-0-4a70109ff0f1124193206ac9d3afd2aa" alt="GeoFlood AI Logo" class="h-8 w-auto object-contain">
+                </div>
+                <p class="text-gray-500 text-sm mb-6">
+                    Solusi cerdas deteksi risiko banjir berbasis data dan kecerdasan buatan untuk keputusan properti yang aman.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 text-gray-900">Produk</h4>
+                <ul class="space-y-2 text-sm text-gray-500">
+                    <li><a href="#" class="hover:text-brand-green transition">Fitur Premium</a></li>
+                    <li><a href="#" class="hover:text-brand-green transition">Harga</a></li>
+                    <li><a href="#" class="hover:text-brand-green transition">API Developer</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 text-gray-900">Perusahaan</h4>
+                <ul class="space-y-2 text-sm text-gray-500">
+                    <li><a href="#" class="hover:text-brand-green transition">Tentang Kami</a></li>
+                    <li><a href="#" class="hover:text-brand-green transition">Karir</a></li>
+                    <li><a href="#" class="hover:text-brand-green transition">Kontak</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-4 text-gray-900">Legal</h4>
+                <ul class="space-y-2 text-sm text-gray-500">
+                    <li><a href="#" class="hover:text-brand-green transition">Kebijakan Privasi</a></li>
+                    <li><a href="#" class="hover:text-brand-green transition">Syarat & Ketentuan</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-100 pt-8 text-center text-sm text-gray-400">
+            &copy; 2024 GeoFlood AI. Hak Cipta Dilindungi Undang-Undang.
+        </div>
+    </footer>
+
+    <!-- JavaScript Interactions -->
+    <script>
+        // --- Navbar Scroll Effect ---
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-md', 'bg-white/95');
+            } else {
+                navbar.classList.remove('shadow-md', 'bg-white/95');
+            }
+        });
+
+        // --- Scroll Reveal Animation ---
+        const revealElements = document.querySelectorAll('.reveal');
+
+        const revealOnScroll = () => {
+            const windowHeight = window.innerHeight;
+            const elementVisible = 150;
+
+            revealElements.forEach((reveal) => {
+                const elementTop = reveal.getBoundingClientRect().top;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveal.classList.add('active');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // --- Download Logic ---
+        function downloadApp() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
